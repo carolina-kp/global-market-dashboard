@@ -1,0 +1,49 @@
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+import plotly.graph_objects as go
+
+st.title("Stock Overview")
+
+ticker = st.text_input("Ticker", "AAPL")
+
+if st.button("Load Overview"):
+    tkr = yf.Ticker(ticker)
+    hist = tkr.history(period="6mo")
+
+    try:
+        info = tkr.info
+    except Exception:
+        info = {}
+
+    st.subheader(f"{info.get('longName', ticker)}  ({ticker.upper()})")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Current price", info.get("currentPrice", "N/A"))
+        st.metric("Market cap", info.get("marketCap", "N/A"))
+    with col2:
+        st.metric("PE ratio", info.get("trailingPE", "N/A"))
+        st.metric("Forward PE", info.get("forwardPE", "N/A"))
+    with col3:
+        st.metric("Beta", info.get("beta", "N/A"))
+        st.metric("52w high", info.get("fiftyTwoWeekHigh", "N/A"))
+
+    st.markdown(
+        f"**Sector:** {info.get('sector', 'N/A')}  |  "
+        f"**Industry:** {info.get('industry', 'N/A')}  |  "
+        f"**Country:** {info.get('country', 'N/A')}"
+    )
+
+    st.write("---")
+
+    if not hist.empty:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=hist.index, y=hist["Close"], mode="lines", name="Close"))
+        fig.update_layout(title="Last 6 months performance", hovermode="x unified")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No historical data available for this ticker.")
+
+    st.subheader("Business Description")
+    st.write(info.get("longBusinessSummary", "No description available."))

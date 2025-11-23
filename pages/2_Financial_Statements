@@ -1,0 +1,45 @@
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+import plotly.express as px
+
+st.title("Financial Statements")
+
+ticker = st.text_input("Ticker", "AAPL")
+
+if st.button("Load Statements"):
+    tkr = yf.Ticker(ticker)
+
+    income = tkr.financials
+    balance = tkr.balance_sheet
+    cashflow = tkr.cashflow
+
+    tab1, tab2, tab3 = st.tabs(["Income Statement", "Balance Sheet", "Cash Flow"])
+
+    with tab1:
+        if isinstance(income, pd.DataFrame) and not income.empty:
+            st.dataframe(income, use_container_width=True)
+            if "Total Revenue" in income.index and "Net Income" in income.index:
+                df_plot = income.loc[["Total Revenue", "Net Income"]].T
+                fig = px.line(df_plot, x=df_plot.index, y=df_plot.columns, markers=True)
+                fig.update_layout(title="Revenue and Net Income over time")
+                st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No income statement data available.")
+
+    with tab2:
+        if isinstance(balance, pd.DataFrame) and not balance.empty:
+            st.dataframe(balance, use_container_width=True)
+        else:
+            st.info("No balance sheet data available.")
+
+    with tab3:
+        if isinstance(cashflow, pd.DataFrame) and not cashflow.empty:
+            st.dataframe(cashflow, use_container_width=True)
+            if "Total Cash From Operating Activities" in cashflow.index:
+                cf = cashflow.loc[["Total Cash From Operating Activities"]].T
+                fig = px.bar(cf, x=cf.index, y=cf.columns)
+                fig.update_layout(title="Operating cash flow over time")
+                st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No cash flow data available.")

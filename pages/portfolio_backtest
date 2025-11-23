@@ -1,0 +1,18 @@
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+import plotly.express as px
+
+st.title("Portfolio Backtest (Equal Weighted)")
+
+symbols = st.text_input("Tickers (comma separated)", "NVDA, AAPL, MSFT")
+
+if st.button("Run Backtest"):
+    tickers = [s.strip().upper() for s in symbols.split(",")]
+    prices = yf.download(tickers)["Close"]
+
+    norm = prices / prices.iloc[0]
+    portfolio = norm.mean(axis=1)
+
+    fig = px.line(x=portfolio.index, y=portfolio.values, labels={"x": "Date", "y": "Value"})
+    st.plotly_chart(fig, use_container_width=True)
